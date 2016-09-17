@@ -1,0 +1,13 @@
+<launch>
+	<node
+		pkg="turtlesim"
+		type="turtlesim_node"
+		name="turtlesim"
+		respawn="true"
+	/>
+	<node
+		pkg="assignment1"
+		type="draw_triangle_node"
+		name="draw_triangle_node"
+	/>
+</launch>

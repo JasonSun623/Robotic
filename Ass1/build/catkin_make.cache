@@ -1,0 +1,2 @@
+assignment1
+-DCATKIN_DEVEL_PREFIX=/home/viki/ROS/Ass1/devel -DCMAKE_INSTALL_PREFIX=/home/viki/ROS/Ass1/install -G Unix Makefiles
