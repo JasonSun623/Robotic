@@ -1,0 +1,40 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/viki/ROS/Ass1/src/assignment1/draw_triangle_node.cpp
+ros/ros.h
+-
+std_msgs/String.h
+/home/viki/ROS/Ass1/src/assignment1/std_msgs/String.h
+geometry_msgs/Twist.h
+/home/viki/ROS/Ass1/src/assignment1/geometry_msgs/Twist.h
+turtlesim/Pose.h
+/home/viki/ROS/Ass1/src/assignment1/turtlesim/Pose.h
+turtlesim/SetPen.h
+/home/viki/ROS/Ass1/src/assignment1/turtlesim/SetPen.h
+assignment1/triangle.h
+/home/viki/ROS/Ass1/src/assignment1/assignment1/triangle.h
+math.h
+-
+
+devel/include/assignment1/triangle.h
+string
+-
+vector
+-
+map
+-
+ros/types.h
+-
+ros/serialization.h
+-
+ros/builtin_message_traits.h
+-
+ros/message_operations.h
+-
+

@@ -1,0 +1,184 @@
+
+
+#include "pathHandle.h"
+#include <nav_msgs/Path.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
+
+#include <math.h>
+#define PI 3.141592		//!<Mathematical constant (default value: 3.141592).
+#define ANGLE_TO_VELOCITY 1 //!<Angle velocity command = angle * (this constant).
+#define APPROX_ITERATIONS 10	//!<Number of iterations in aproximation of intersection.
+
+//Constructor and destructor
+pathHandle::pathHandle(ros::Publisher pub, nav_msgs::Path p, double tol, double sp, double targetDist)
+{
+	pathToFollow = p;
+        
+	if (targetDist < 2*tol){
+		ROS_INFO("target distance must be bigger than 2*tolerance");
+		exit(1);
+	}
+	targetDistance = targetDist;
+	tolerance = tol;
+	speed = sp;
+	pubMessage = pub;
+	lastRemoved = pathToFollow.poses.front();
+	target = new PointClass(0.0,0.0);
+	pathToFollow.poses.pop();
+}
+
+pathHandle::~pathHandle()
+{
+}
+
+//Publisher
+void pathHandle::publishMessage(double angleCommand, double speedCommand)
+{
+	//preparing message
+	geometry_msgs::Twist msg;
+	
+	msg.linear.x = speedCommand;
+	msg.angular.z = angleCommand*ANGLE_TO_VELOCITY;
+		
+	//sending information about message to console
+	ROS_INFO("Sending msg: linear.x=%f, angular.z=%f",msg.linear.x,msg.angular.z);
+	
+	//publishing message
+	pubMessage.publish(msg);
+}
+
+//Subscriber
+void pathHandle::messageCallback(const nav_msgs::Odometry::ConstPtr& msg)   //Here we should process the TF transform
+{
+	double angleCommand = 0;
+	double speedCommand = 0;
+	PointClass* actual = new PointClass(msg->pose.pose.position.x, msg->pose.pose.position.y);
+	findTarget(actual);
+	if (closeEnough(actual) == true && pathToFollow.poses.empty())
+	{
+		ROS_INFO("GOAL ACHIEVED");
+		publishMessage(0.0,0.0);
+		exit(0);
+	}
+	speedCommand = calculateSpeed(actual);
+	angleCommand = calculateAngle(actual, 2.0*asin(msg->pose.pose.orientation.z), speed);
+	
+	//Invoking method for publishing message
+	publishMessage(angleCommand, speedCommand);
+}
+
+PointClass  pathHandle::getLastRemovedPoint(double X, double Y)
+{
+    return PointClass(X, Y);
+}
+
+double pathHandle::calculateAngle(PointClass* actual, double angle, double speed)
+{
+	double angleCalc;
+	double distance;
+	double radius;
+	double routeDistance;
+	double time;
+	double angleVelocity;
+	angleCalc = actual->getAngle(target)-angle;
+	
+	//normalizing angle to <-pi; pi>
+	if (fabs(angleCalc)>PI)
+	{
+		angleCalc = angleCalc - copysign(2*PI,angleCalc);
+	}
+	distance = actual->getDistance(target);
+	radius = fabs((distance/2)/(cos(PI/2 - angleCalc)));
+	routeDistance = 2*PI*radius*(fabs(angleCalc)/(PI));
+	time=routeDistance/speed;
+	angleVelocity = 2*angleCalc/time;
+	return angleVelocity;
+}
+
+bool pathHandle::closeEnough(PointClass* actual)
+{
+	double distance;
+	distance = actual->getDistance(target);
+	if (distance > tolerance)
+	{
+		return false;
+	}
+	return true;
+}
+
+double pathHandle::calculateSpeed(PointClass* actual)
+{
+	return speed;
+}
+
+void pathHandle::findTarget(PointClass* actual)
+{
+	// Removing points from the queue until point with higher distance
+	// from robot than targetDistance is found.
+	if (pathToFollow.poses.empty() == false)
+	{
+	while (actual->getDistance(pathToFollow.poses.front()) < targetDistance)
+	{
+		lastRemoved = pathToFollow.poses.front();
+		pathToFollow.poses.pop();
+		if(pathToFollow.poses.empty() == true){
+			break;
+		}
+	}
+	}
+	if (pathToFollow.poses.empty() == true)
+	{
+		target->x = lastRemoved->pose.position.x;
+		target->y = lastRemoved->pose.position.y;
+	}
+	else
+	{
+		//circle - line aproximation
+		
+		//vector: FRONT - LAST REMOVED
+		PointClass* s = new PointClass(pathToFollow.poses.front()->pose.position.x - lastRemoved->pose.position.x, pathToFollow.poses.front()->pose.position.y - lastRemoved->pose.position.y);
+		
+		//vector which will be added to lastRemoved
+		PointClass* v = new PointClass(0.0,0.0);
+                PointClass* lastPointRemoved = getLastRemovedPoint(lastRemoved->pose.position.x,lastRemoved->pose.position.y);
+                
+		
+		if (actual->getDistance(lastPointRemoved) >= targetDistance && actual->getDistance(pathToFollow.poses.front()) >= targetDistance && 
+		(lastRemoved->pose.position.x != pathToFollow.poses.front()->pose.position.x || lastRemoved->pose.position.y != pathToFollow.poses.front()->pose.position.y))	//two intersections
+		{
+			//finding point between intersections
+			//calculating line
+			double a, b, c, dist;
+			a = lastRemoved->pose.position.y - pathToFollow.poses.front()->pose.position.y;
+			b = pathToFollow.poses.front()->pose.position.x - lastRemoved->pose.position.x;	
+			c = lastRemoved->pose.position.x * pathToFollow.poses.front()->position.y - pathToFollow.poses.front()->pose.position.x * lastRemoved->pose.position.y;
+			if (a * a + b * b < 0.001)	//front and lastRemoved are the same
+			{
+				target->x = lastRemoved->pose.position.x;
+				target->y = lastRemoved->pose.position.y;
+				return;
+			}		
+			dist = fabs(a*actual->x + b*actual->y + c)/sqrt(a * a + b * b);	//distance between point and line
+			double distFromLast;
+			distFromLast = sqrt(pow(new PointClass(lastRemoved->pose.position.x,lastRemoved->pose.position.y)->getDistance(actual)),2.0) - pow(dist,2.0));
+			v->x = (distFromLast/s->getAbs())*s->x;
+			v->y = (distFromLast/s->getAbs())*s->y;
+			s->x = s->x - v->x;
+			s->y = s->y - v->y;
+		}
+		
+		for (int i = 1; i < APPROX_ITERATIONS; i++)
+		{
+			if ((*target + s->times(pow(2,-i)) + *v - *actual).getAbs() < targetDistance)
+			{
+				*v = *v + s->times(pow(2,-i));
+			}
+			
+		}
+		target->x  = lastRemoved->pose.position.x + v->x;
+		target->y = lastRemoved->pose.position.y + v->y;
+	}
+	
+	
+}

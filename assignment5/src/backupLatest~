@@ -1,0 +1,142 @@
+#include <ros/ros.h>
+#include "std_msgs/String.h"
+#include "geometry_msgs/Twist.h"
+#include "turtlesim/Pose.h"
+#include "turtlesim/SetPen.h"
+#include "assignment5/triangle.h"
+#include <math.h>
+#include <actionlib/client/simple_action_client.h>
+#include <actionlib/server/simple_action_server.h>
+#include <turtlebot_actions/TurtlebotMoveAction.h>
+//#include <turtlebot_actions/TurtlebotMoveGoal.h>
+#include<turtlebot_actions/TurtlebotMoveActionGoal.h>
+#include<turtlebot_actions/TurtlebotMoveActionFeedback.h>
+#include<actionlib/client/simple_client_goal_state.h>
+#include<actionlib/client/simple_action_client.h>
+#include<turtlebot_actions/TurtlebotMoveActionResult.h>
+
+
+#define _USE_MATH_DEFINES
+#define BUFFER_SIZE 1
+#define SPEED 0.15 
+#define SUBSCRIBER_MSG_TOPIC "cmd"
+using namespace std;
+
+
+
+char nodeName [] = "move_triangle";
+ros::Publisher thePublisher;
+bool clockwize = true;
+double forwardDist = 5;
+bool starting = false;
+double angleInRadians = 120 * M_PI / 180;
+bool commandReceived = false;
+bool running = false;
+ actionlib::SimpleActionClient<turtlebot_actions::TurtlebotMoveAction> *MoveClient;
+
+
+
+void movePublisher(actionlib::SimpleActionClient<turtlebot_actions::TurtlebotMoveAction> *MoveClient);
+void rotationProcessing(actionlib::SimpleActionClient<turtlebot_actions::TurtlebotMoveAction> *MoveClient);
+void moveManager(actionlib::SimpleActionClient<turtlebot_actions::TurtlebotMoveAction> *MoveClient);
+void DoneCallback(const actionlib::SimpleClientGoalState& state, const turtlebot_actions::TurtlebotMoveResultConstPtr resultMsg);
+void ActiveCallback();
+void FeedbackCallback(turtlebot_actions::TurtlebotMoveFeedbackConstPtr feedbackMsg);
+
+
+//Callback triangle
+
+void commandtriangleReceived(const assignment5::triangle &msgIn) {
+    commandReceived = true;
+    forwardDist = msgIn.sideLength;
+    clockwize = msgIn.clw;
+    if(!running)
+    {
+      moveManager(MoveClient);
+    }
+    
+}
+
+void FeedbackCallback(turtlebot_actions::TurtlebotMoveFeedbackConstPtr feedbackMsg) {
+
+    //ROS_INFO_STREAM("Forward distance: "<<feedbackMsg.get()->forward_distance);
+    // ROS_INFO_STREAM("turn around distance: "<<feedbackMsg.get()->turn_distance);
+
+
+}
+
+void ActiveCallback() {
+    
+    ROS_INFO("Goal just went active");
+}
+
+void DoneCallback(const actionlib::SimpleClientGoalState& state, const turtlebot_actions::TurtlebotMoveResultConstPtr resultMsg) {
+    ROS_INFO("... Done");
+}
+
+int main(int argc, char *argv[]) {
+    ros::init(argc, argv, nodeName);
+    ros::NodeHandle nh;
+     MoveClient = new actionlib::SimpleActionClient<turtlebot_actions::TurtlebotMoveAction>("turtlebot_move", true);
+    ros::Subscriber subTriangle = nh.subscribe(SUBSCRIBER_MSG_TOPIC, BUFFER_SIZE, &commandtriangleReceived);
+    
+    sleep(5.0);
+    
+    ros::spin();
+    return 0;
+}
+
+//Now we are building the move publisher
+
+bool movePublisher(actionlib::SimpleActionClient<turtlebot_actions::TurtlebotMoveAction> *MoveClient) {
+    ROS_INFO(" Entered move");
+    turtlebot_actions::TurtlebotMoveActionGoal goalMsg;
+    goalMsg.header.frame_id = "base_link";
+    goalMsg.goal.turn_distance = 0.000;
+    goalMsg.goal.forward_distance = forwardDist;
+    if (MoveClient->isServerConnected()) {
+        ROS_INFO(" Server connected");
+        MoveClient->sendGoal(goalMsg.goal, &DoneCallback, &ActiveCallback, &FeedbackCallback);
+        ROS_INFO_STREAM(MoveClient->getState().state_);
+        MoveClient->waitForResult();
+    }
+     rotationProcessing(MoveClient);
+}
+
+bool rotationProcessing(actionlib::SimpleActionClient<turtlebot_actions::TurtlebotMoveAction> *MoveClient) {
+    ROS_INFO(" Entered turn");
+    // Converting to radians
+    
+     starting?angleInRadians = 180 * M_PI / 180:angleInRadians = 120 * M_PI / 180;
+
+    turtlebot_actions::TurtlebotMoveActionGoal goalMsg;
+    goalMsg.header.frame_id = "base_link";
+    clockwize ? goalMsg.goal.turn_distance = -angleInRadians : goalMsg.goal.turn_distance = angleInRadians;
+    goalMsg.goal.forward_distance = 0.000;
+
+    if (MoveClient->isServerConnected()) {
+        ROS_INFO(" Server connected");
+        MoveClient->sendGoal(goalMsg.goal, &DoneCallback, &ActiveCallback, &FeedbackCallback);
+        ROS_INFO_STREAM(MoveClient->getState().state_);
+        MoveClient->waitForResult())
+    }
+    return false;
+}
+
+void moveManager(actionlib::SimpleActionClient<turtlebot_actions::TurtlebotMoveAction> *MoveClient) {
+    int counter = 3;
+    running=true;
+    for (int i = 0; i < counter; i++) {
+        /* code */
+        if (i == 0)starting = true;
+        else starting = false;
+        
+        movePublisher(MoveClient);
+    }
+    running=false;
+    
+
+}
+
+
+

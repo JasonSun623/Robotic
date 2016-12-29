@@ -1,0 +1,62 @@
+//This node is using the servoing technique to make the Robot go to a specified location in the world.
+/*We will need:
+  A subscriber that receives goal position (Message type: geometry_msgs/PoseStamped )from a topic named "/goal" 
+  A Subscriber that recieves the current location (Message type: nav_msgs/Odometry)  of the Robot in the world through the topic: "/odom "  
+  A Publisher that sends the  the "goal position" (Message type: geometry_msgs/Twist) to the Robot through the topic: "/cmd_vel "
+
+  */
+
+#include <ros/ros.h>
+#include "std_msgs/String.h"
+#include <tf/transform_datatypes.h>
+#include "geometry_msgs/Twist.h"
+#include "geometry_msgs/Pose.h"
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
+#include <nav_msgs/Path.h>
+//#include "include/PointClass.h"
+
+
+  nav_msgs::Path getPath();
+  char nodeName []= "rectangle_node";
+  ros::Publisher thePublisher;
+   nav_msgs::Path p;
+  nav_msgs::Path getPath()
+  {
+
+        geometry_msgs::PoseStamped pose1, pose2,pose3,pose4;
+        pose1.pose.position.x =0.0;
+        pose1.pose.position.y=3.0;
+        
+        pose2.pose.position.x =6.0;
+        pose2.pose.position.y=3.0;
+        
+        pose3.pose.position.x =6.0;
+        pose3.pose.position.y=0.0;
+        
+        pose4.pose.position.x =0.0;
+        pose4.pose.position.y=0.0;
+        
+    
+   
+      p.poses.push_back(pose1);
+      p.poses.push_back(pose2);
+      p.poses.push_back(pose3); 
+      p.poses.push_back(pose4);
+    return p;
+    
+  }
+
+  int main(int argc, char  *argv[])
+  {
+
+  	ros::init(argc,argv,nodeName);
+  	ros::NodeHandle nh;
+  	thePublisher = ros::Publisher(nh.advertise<nav_msgs::Path>("plan",1000));
+        
+        
+        thePublisher.publish(getPath());
+        ROS_INFO_STREAM(" Path published !!");
+  	ros::spin();
+  	return 0;
+  }

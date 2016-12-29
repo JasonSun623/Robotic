@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Conversion were obtained from http://www.e-paint.co.uk/Lab_values.asp
+       unless otherwise stated. -->
+
+  <!-- RAL 7032 pebble gray, controller -->
+  <xacro:property name="colour_lynxmotion_pebble_gray" value="0.7058823 0.6901961 0.6313725 1" />
+
+  <!-- RAL 7021 black gray (lynxmotion black) , robot with dark link color -->
+  <xacro:property name="colour_lynxmotion_black" value="0.1882353 0.1960784 0.2039216 1" />
+  
+  <xacro:property name="cylinder_lynxmotion_base_radius" value="0.2" />
+  
+  <xacro:property name="cylinder_lynxmotion_base_length" value="0.2" />
+  
+  <xacro:property name="origin_lynxmotion_base_link" value="0 0 0" />
+
+  <xacro:property name="origin_lynxmotion_link1" value="0 0 0" />
+  
+  <xacro:property name="box_lynxmotion_link1_size" value="3 2 3" />
+  
+  <xacro:property name="origin_lynxmotion_link2" value="0 0 0" />
+  
+  <xacro:property name="box_lynxmotion_link2_size" value="2 1 2" />
+  
+  <xacro:property name="origin_lynxmotion_link3" value="0 0 0" />
+  
+  <xacro:property name="box_lynxmotion_link3_size" value="2 1 2" />
+  
+  <xacro:property name="origin_lynxmotion_link4" value="0 0 0" />
+  
+  <xacro:property name="box_lynxmotion_link4_size" value="3 2 3" />
+  
+  <xacro:property name="origin_lynxmotion_link5" value="0 0 0" />
+  
+  <xacro:property name="box_lynxmotion_link5_size" value="2 1 2" />
+  
+  <xacro:property name="origin_lynxmotion_link6" value="0 0 0" />
+  
+  <xacro:property name="box_lynxmotion_link6_size" value="2 1 2" />
+
+</robot>

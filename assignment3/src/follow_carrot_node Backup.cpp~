@@ -1,0 +1,267 @@
+
+#include <ros/ros.h>
+#include <tf/transform_datatypes.h>
+#include "geometry_msgs/Twist.h"
+#include "geometry_msgs/PoseStamped.h" 
+#include <nav_msgs/Path.h>
+#include <tf/transform_listener.h>
+#include <tf/transform_datatypes.h>
+#include <tf/tf.h>
+#include <math.h>
+#include <geometry_msgs/Point.h>
+
+#define BUFFER_SIZE 1000 
+
+#define TOLERANCE 0.05 
+
+#define SPEED 0.15  
+
+#define LOOK_AHEAD 0.2 
+
+#define PLAN_FRAME   "odom"
+
+#define PATH_FRAME   "map"
+
+#define ROBOT_FRAME  "base_footprint"
+
+#define PUBLISHER_TOPIC "cmd_vel"
+
+#define SUBSCRIBER_TOPIC "plan"
+
+
+
+void Path_Received_CallBack(nav_msgs::Path pathMsg);
+double calculateAngle(geometry_msgs::PoseStamped actual, double angle, double speed);
+bool checkProximity(geometry_msgs::PoseStamped actual);
+double calculateDistance(geometry_msgs::Point p, geometry_msgs::Point Tp);
+geometry_msgs::PoseStamped CurrentRobotPose();
+void moveToCarrot(std::vector<geometry_msgs::Pose> carrotPose);
+void printReceivedData(std::vector<geometry_msgs::Pose> carrotPose);
+void publishMessage(double angle_velo, double linear_velo);
+
+
+
+char nodeName [] = "follow_carrot_node";
+
+ros::Publisher thePublisher;
+
+nav_msgs::Path path;
+
+geometry_msgs::PoseStamped lastRemoved;
+
+geometry_msgs::PoseStamped target;
+
+bool received = false;
+
+tf::TransformListener *listener;
+
+int itterationCounter = 10;
+
+double calculateDistance(geometry_msgs::Point Ap, geometry_msgs::Point Tp) {
+    return sqrt((pow(Tp.y - Ap.y, 2.0)) + (pow(Tp.x - Ap.x, 2.0)));
+}
+
+bool checkProximity(geometry_msgs::PoseStamped actual) {
+    double distanceToGoal;
+    geometry_msgs::Point Ap;
+    Ap.x = actual.pose.position.x;
+    Ap.y = actual.pose.position.y;
+    Ap.z = actual.pose.position.z;
+    geometry_msgs::Point Tp;
+    Tp.x = target.pose.position.x;
+    Tp.y = target.pose.position.y;
+    Tp.z = target.pose.position.z;
+
+    distanceToGoal = calculateDistance(Ap, Tp);
+    if (distanceToGoal > TOLERANCE) {
+        return false;
+    }
+    return true;
+}
+
+double calculateAngle(geometry_msgs::PoseStamped actual, double angle, double speed) {
+    geometry_msgs::Point Ap;
+    Ap.x = actual.pose.position.x;
+    Ap.y = actual.pose.position.y;
+    Ap.z = actual.pose.position.z;
+    geometry_msgs::Point Tp;
+    Tp.x = target.pose.position.x;
+    Tp.y = target.pose.position.y;
+    Tp.z = target.pose.position.z;
+    double angleCalc;
+    double distance;
+    double radius;
+    double routeDistance;
+    double time;
+    double angleVelocity;
+    angleCalc = atan2((Tp.y - Ap.y), (Tp.x - Ap.x));
+
+    //normalizing angle to <-pi; pi>
+    if (fabs(angleCalc) > M_PI) {
+        angleCalc = angleCalc - copysign(2 * M_PI, angleCalc);
+    }
+    distance = calculateDistance(Tp, Ap);
+    radius = fabs((distance / 2) / (cos(M_PI / 2 - angleCalc)));
+    routeDistance = 2 * M_PI * radius * (fabs(angleCalc) / (M_PI));
+    time = routeDistance / speed;
+    angleVelocity = 2 * angleCalc / time;
+    return angleVelocity;
+
+}
+
+geometry_msgs::PoseStamped CurrentRobotPose() {
+    tf::StampedTransform transform;
+    geometry_msgs::PoseStamped current_robot_pose;
+    listener->lookupTransform(PLAN_FRAME, ROBOT_FRAME, ros::Time(0), transform);
+
+    current_robot_pose.header.frame_id = ROBOT_FRAME;
+    current_robot_pose.header.stamp = ros::Time(0);
+    current_robot_pose.pose.position.x = transform.getOrigin().x();
+    current_robot_pose.pose.position.y = transform.getOrigin().y();
+    current_robot_pose.pose.position.z = 0;
+
+   /* ROS_INFO_STREAM(" Robot current Pose received: X= " << current_robot_pose.pose.position.x
+            << "  Y= " << current_robot_pose.pose.position.y
+            << "  Z= " << current_robot_pose.pose.position.z);*/
+    return current_robot_pose;
+}
+
+void Path_Received_CallBack(nav_msgs::Path pathMsg) {
+    path = pathMsg;
+    received = true;
+    ROS_INFO_STREAM(" Path received");
+    while (!path.poses.empty())path.poses.pop_back();
+
+    tf::StampedTransform transform;
+    try {
+        bool transform_exist = false;
+        ros::Time now = ros::Time::now();
+        transform_exist = listener->waitForTransform(PATH_FRAME, PLAN_FRAME, now, ros::Duration(2.0));
+        if (transform_exist) {
+            listener->lookupTransform(PATH_FRAME, PLAN_FRAME, now, transform);
+            ROS_INFO_STREAM("Transform found");
+            double phi = 2.0 * asin(transform.getRotation().z());
+            std::vector<geometry_msgs::PoseStamped> data = pathMsg.poses;
+            std::vector<geometry_msgs::Pose> carrotPoses;
+            for (int i = 0; i < data.size(); i++) {
+                double x_t = data[i].pose.position.x - transform.getOrigin().x(); //translation
+                double y_t = data[i].pose.position.y - transform.getOrigin().y(); //translation
+                double x_r = x_t * cos(phi) + y_t * sin(phi);
+                double y_r = -x_t * sin(phi) + y_t * cos(phi);
+                geometry_msgs::Pose p;
+                p.position.x = x_r;
+                p.position.y = y_r;
+                p.position.z = 0;
+                carrotPoses.push_back(p);
+            }
+            moveToCarrot(carrotPoses);
+        } else
+            ROS_INFO_STREAM("Transform Not found");
+    } catch (tf::TransformException ex) {
+        ROS_ERROR("%s", ex.what());
+        ros::Duration(1.0).sleep();
+    }
+
+}
+
+/*
+ This function is simply used to debug and print out the Received Path
+ */
+void printReceivedData(std::vector<geometry_msgs::Pose> carrotPose) {
+    switch (carrotPose.size()) {
+        case 4:
+            ROS_INFO_STREAM(" Rectangle Path received ");
+            break;
+        case 3:
+            ROS_INFO_STREAM(" Triangle Path received ");
+            break;
+
+        default:
+            ROS_INFO_STREAM(" Unknown Path received ");
+            break;
+    }
+    for (int i = 0; i < carrotPose.size(); i++) {
+        ROS_INFO_STREAM("  [  Goal point :" << i + 1 << "  X= "
+                << carrotPose[i].position.x << "  Y= "
+                << carrotPose[i].position.y << "]");
+    }
+}
+
+void moveToCarrot(std::vector<geometry_msgs::Pose> carrotPose) {
+    geometry_msgs::PoseStamped currentRobotPose, carrot;
+    tf::Quaternion qNext;
+    for(int i=0; i< carrotPose.size();i++)
+    {
+         currentRobotPose = CurrentRobotPose();
+         qNext=tf::createQuaternionFromYaw(atan2(currentRobotPose.pose.position.y- carrotPose[i].position.y, currentRobotPose.pose.position.x- carrotPose[i].position.x));
+         ROS_INFO_STREAM(tf::getYaw(qNext));
+        // publishMessage(SPEED, SPEED);
+
+    }
+   /* printReceivedData(carrotPose);
+    geometry_msgs::Pose lastRemoved;
+    geometry_msgs::Pose target;
+
+    geometry_msgs::Point pointRobot, pointFront;
+    pointRobot.x = currentRobotPose.pose.position.x;
+    pointRobot.y = currentRobotPose.pose.position.y;
+
+    pointFront.x = carrotPose.front().position.x;
+    pointFront.y = carrotPose.front().position.y;
+    pointFront.z = carrotPose.front().position.z;
+
+    // Now the moving starts;
+    if (!carrotPose.empty()) {
+        while ((calculateDistance(pointRobot, pointFront)) < LOOK_AHEAD) {
+
+            lastRemoved = carrotPose.front();
+            carrotPose.pop_back();
+            if (carrotPose.empty()) break;
+
+        }
+        if (carrotPose.empty()) {
+            target.position.x = lastRemoved.position.x;
+            target.position.y = lastRemoved.position.y;
+            ROS_INFO_STREAM(" Accumulator is empty ");
+        }
+        else {
+            ROS_INFO_STREAM(" Accumulator is not empty ");           
+            
+        //NOT FINISHED !!!!!!!!!!!!!!!!!
+        //TO BE CONTINUED
+        }
+
+    }*/
+
+
+
+
+}
+bool moveToPose(geometry_msgs::Pose ps)
+{
+
+
+}
+//This function publishes the Twist messages.
+void publishMessage(double angleCommand, double linear_velo) {
+    geometry_msgs::Twist msg;
+    msg.angular.z = angleCommand*SPEED;
+    msg.linear.x = linear_velo;
+    thePublisher.publish(msg);
+    ros::spinOnce();
+}
+//Main Function
+
+int main(int argc, char *argv[]) {
+
+    ros::init(argc, argv, nodeName);
+    ros::NodeHandle nh;
+    listener = new tf::TransformListener();
+
+    ros::Subscriber rectangleSub = nh.subscribe(SUBSCRIBER_TOPIC, BUFFER_SIZE, &Path_Received_CallBack);
+    thePublisher = ros::Publisher(nh.advertise<geometry_msgs::Twist>(PUBLISHER_TOPIC, BUFFER_SIZE));
+
+    ros::spin();
+    return 0;
+}
+

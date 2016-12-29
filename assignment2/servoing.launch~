@@ -1,0 +1,14 @@
+<launch>
+	<node
+		pkg="stage_ros"
+		type="stageros"
+		name="stageros"
+		args="$(find assignment2)/empty.world"
+		respawn="true"		
+	/>
+	<node
+		pkg="assignment2"
+		type="servoing_node"
+		name="servoing_node"
+	/>
+</launch>

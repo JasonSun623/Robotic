@@ -1,0 +1,265 @@
+#include <ros/ros.h>
+#include "sensor_msgs/LaserScan.h"
+#include <tf/transform_datatypes.h>
+#include "geometry_msgs/Twist.h"
+#include "geometry_msgs/PoseStamped.h" 
+#include <nav_msgs/Path.h>
+#include <tf/transform_listener.h>
+#include <tf/tf.h>
+#include <math.h>
+
+#define GOAL_TOPIC "move_base_simple/goal"
+#define PUBLISHER_TOPIC "cmd_vel0"
+#define NODE_NAME "seek_behaviour"
+#define PLAN_FRAME   "odom"
+#define ROBOT_FRAME  "base_footprint"
+#define SUBSCRIBER_BUFFER_SIZE 1	//!<Size of buffer for subscriber.
+
+#define PUBLISHER_BUFFER_SIZE 1000	//!<Size of buffer for publisher.
+
+#define ANGLE_COEF 2 //!<Coeficient for angles.
+
+#define ROBOT_SPEED 0.10 //!<Speed of robot [m/s].
+
+using namespace std;
+
+enum State {
+    IDLE,
+    PREPROCESS,
+    DRIVING,
+    ARRIVED,
+};
+
+class SeekBehaviour {
+public:
+    // members
+
+    // methods
+    SeekBehaviour();
+
+protected:
+    // members
+    ros::NodeHandle nh;
+    ros::Subscriber goal_sub;
+    ros::Publisher commandPub; // Publisher to the robot's velocity command topic
+    ros::Subscriber laserSub; // Subscriber to the robot's laser scan topic
+    geometry_msgs::PoseStamped currentPose,goal;
+    double angleToGoal;
+    
+    State currentState; // state of seeking procedure
+    tf::TransformListener *listener;
+    tf::StampedTransform transform;
+    bool received;
+    	ros::Timer timer_;
+        ros::Timer timer_1;
+        int rate_;
+        double robotAngle;
+        bool running, rotate;
+
+
+    void on_Goal_Received(geometry_msgs::PoseStamped msg);
+    void scanCallback(const sensor_msgs::LaserScan::ConstPtr& scan);
+    geometry_msgs::PoseStamped getRobotPose();
+    double calculateAngle(geometry_msgs::Pose current, geometry_msgs::Pose target);
+    void rotationProcessing(bool cw, int angle);
+    bool stopToProcess();
+    void rotateRobot();
+     void DriveToGoal();
+  void shooting();
+  void pointing( double angle);
+  void CalculateDistanceError(double X, double Y);
+  void CalculateAngleErrorInRadians(double Y, double X);
+
+
+
+  char nodeName []= "pointshoot_node";
+  volatile double currentX =0.0;
+  volatile double currentY =0.0;
+  double goalX =0.0;
+  double goalY =0.0;
+  double angle_in_radians= 0.0;
+  double distance = 0.0;
+  double angle_Orientation =0.0;
+  double goalOrientation =0.0;
+  bool arrived = false;
+
+};
+
+SeekBehaviour::SeekBehaviour() {
+
+    listener = new tf::TransformListener();
+    received =rotate =running = false;
+    int rate_ =50;
+    commandPub = nh.advertise<geometry_msgs::Twist>(PUBLISHER_TOPIC, 10);
+    goal_sub = nh.subscribe<geometry_msgs::PoseStamped>(GOAL_TOPIC, 100, &SeekBehaviour::on_Goal_Received, this);
+    laserSub = nh.subscribe("base_scan", 1, &SeekBehaviour::scanCallback, this);
+   //timer_ = nh.createTimer(ros::Duration(1.0/rate_), boost::bind(&SeekBehaviour::rotateRobot, this));
+    // timer_1 = nh.createTimer(ros::Duration(1.0/rate_), boost::bind(&SeekBehaviour::stopToProcess, this));
+    
+
+}
+
+
+
+// Process the incoming laser scan message
+void SeekBehaviour::scanCallback(const sensor_msgs::LaserScan::ConstPtr& msg) {
+    
+
+}
+  void SeekBehaviour::CalculateDistanceError(double X, double Y)
+  {
+    distance = ((int)(10.0*sqrt((pow(X, 2) )+ (pow (Y, 2) )))/10.0F);
+
+  }
+
+  void SeekBehaviour::CalculateAngleErrorInRadians(double Y,double X)
+  {
+    angle_in_radians = (int)(10.0*(atan2(Y, X)))/10.0F;
+  }
+//Process the incoming goals
+void SeekBehaviour::on_Goal_Received(geometry_msgs::PoseStamped goalMsg) {
+    //rotationProcessing(true, 90);
+   arrived = false;
+   goalX =goalMsg.pose.position.x;
+   goalY =goalMsg.pose.position.y;
+   
+
+   double X =goalMsg.pose.position.x- currentX;
+   double Y =goalMsg.pose.position.y- currentY;
+   goalOrientation =  tf::getYaw(goalMsg.pose.orientation);
+   CalculateDistanceError(X, Y);
+   CalculateAngleErrorInRadians(Y,X);
+
+   DriveToGoal ();
+    
+}
+
+//Calculate angel between 2 lines
+double SeekBehaviour::calculateAngle(geometry_msgs::Pose current, geometry_msgs::Pose target) {
+
+    double angleCalc = atan2((current.position.y - target.position.y), (current.position.x - target.position.x));
+    //normalizing angle to <-pi; pi>
+    if (fabs(angleCalc) > M_PI) {
+        angleCalc = angleCalc - copysign(2 * M_PI, angleCalc);
+    }
+        ROS_INFO_STREAM(angleCalc);
+    return angleCalc;
+}
+
+//Get the current robot's Pose
+geometry_msgs::PoseStamped SeekBehaviour::getRobotPose() {
+
+
+    bool transform_exist = false;
+    ros::Time now = ros::Time::now();
+    geometry_msgs::PoseStamped current_robot_pose;
+    transform_exist = listener->waitForTransform(PLAN_FRAME, ROBOT_FRAME, now, ros::Duration(2.0));
+    if (transform_exist) {
+        // ROS_INFO_STREAM("Transform found");
+        listener->lookupTransform(PLAN_FRAME, ROBOT_FRAME, ros::Time(0), transform);
+
+        current_robot_pose.header.frame_id = ROBOT_FRAME;
+        current_robot_pose.pose.position.x = transform.getOrigin().x();
+        current_robot_pose.pose.position.y = transform.getOrigin().y();
+        current_robot_pose.pose.position.z = transform.getOrigin().z();
+      double w=  current_robot_pose.pose.orientation.w = transform.getRotation().w();
+      double x =  current_robot_pose.pose.orientation.x = transform.getRotation().x();
+     double y =current_robot_pose.pose.orientation.y = transform.getRotation().y();
+     double z =current_robot_pose.pose.orientation.z = transform.getRotation().z();    
+     robotAngle=atan2(2*(y*x+w*z),w*w+x*x-y*y-z*z);
+    }
+    ROS_INFO_STREAM(current_robot_pose);
+    return current_robot_pose;
+}
+/*Main Function*/
+int main(int argc, char **argv) {
+    ros::init(argc, argv, NODE_NAME);
+    SeekBehaviour seek_behaviour;
+   
+    ros::spin();
+    return 0;
+}
+void SeekBehaviour::rotationProcessing(bool cw, int angle) {
+    ROS_INFO_STREAM("bdsjbakdbckb ");
+    double angular_speed = 5 * M_PI / 180; // Converting to radians
+    double angleInRadius = angle * M_PI / 180;
+    geometry_msgs::Twist theMsg;
+    //We are now perfoming the rotation task:
+    //Step1 we set all the linear values to 0 as we are not performing any linear motion
+    theMsg.linear.x = 0;
+    theMsg.linear.y = 0;
+    theMsg.linear.z = 0;
+
+    //Angular velocity in the Y-axies
+    // We have to consider the rotation direction (clock/conter clockwise)
+    //Clockwise == negative values
+    //Conter clockwise = positive values
+    theMsg.angular.y = 0;
+    theMsg.angular.x = 0;
+    if (cw == true)
+        theMsg.angular.z = -abs(angular_speed);
+    else
+        theMsg.angular.z = abs(angular_speed);
+
+
+    //Now Publishing the message
+    commandPub.publish(theMsg);
+
+
+    double current_angle = double(0);
+    double T0 = ros::Time::now().toSec();
+    ros::Rate rosRate(100);
+
+    do {
+        /* code */
+        commandPub.publish(theMsg);
+        double T1 = ros::Time::now().toSec();
+        current_angle = angular_speed * (T1 - T0);
+        ros::spinOnce();
+        rosRate.sleep();
+
+    } while (current_angle < angleInRadius); 
+    theMsg.angular.z = 0;
+    commandPub.publish(theMsg);
+}
+
+bool SeekBehaviour::stopToProcess() {
+    ROS_INFO_STREAM("Stop to Process ");
+    running = true;
+    geometry_msgs::Twist theMsg;
+   
+    theMsg.angular.z = 0;
+    theMsg.linear.x  = 0;
+   // commandPub.publish(theMsg); 
+            currentPose = getRobotPose(); 
+            angleToGoal = calculateAngle(currentPose.pose, goal.pose); 
+        
+    
+    
+     /*  float angle = atan2(goal.pose.position.y - currentPose.pose.position.y, goal.pose.position.x - currentPose.pose.position.x);
+    float difference_angle = angle - robotAngle;
+    if (difference_angle * 180 / M_PI > 180)
+    {
+        difference_angle = (-360 + (difference_angle * 180 / M_PI)) * M_PI / 180;
+    }
+    else if(difference_angle * 180 / M_PI < -180){
+        difference_angle = (360 - (difference_angle * 180 / M_PI)) * M_PI / 180;*/
+   // }
+    rotationProcessing(true,  90);
+    return true;
+}
+void SeekBehaviour::rotateRobot() {
+    ROS_INFO_STREAM("Rotate state ");
+//    geometry_msgs::Twist theMsg;
+//   
+//    theMsg.angular.z = 0;
+//    theMsg.linear.x  = 0;
+    
+    if(rotate)
+    {
+           rotationProcessing(true, angleToGoal);
+           rotate = false;
+            
+    }
+    return ;
+}

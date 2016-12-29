@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:property name="colour_lynxmotion_pebble_gray" value="0.411765 0.411765 0.411765 1" />
+
+  <xacro:property name="colour_lynxmotion_black" value="0.1882353 0.1960784 0.2039216 1" />
+  
+  <xacro:property name="cylinder_lynxmotion_base_radius" value="0.15" />
+  
+  <xacro:property name="cylinder_lynxmotion_base_length" value="0.1" />
+  
+  <xacro:property name="origin_lynxmotion_base_link" value="0 0 0" />
+
+  <xacro:property name="origin_lynxmotion_link" value="0 0 0" />
+  
+  <xacro:property name="box_lynxmotion_link1_size" value="0 0 0 " />
+  
+  <xacro:property name="origin_lynxmotion_link2" value="0 0 0" />
+  
+  <xacro:property name="box_lynxmotion_link2_size" value=".15 .060325 0.2" />
+  
+  <xacro:property name="origin_lynxmotion_link3" value="0.15 0.15 0.15" />
+  
+  <xacro:property name="box_lynxmotion_link3_size" value="0.01 .1 .2" />
+  <xacro:property name="box_lynxmotion_link9_size" value="0.01 .1 .17" />
+  
+  <xacro:property name="origin_lynxmotion_link4" value="0 0 0" />
+  
+  <xacro:property name="box_lynxmotion_link4_size" value="0.15 .15 .15" />
+  
+  <xacro:property name="origin_lynxmotion_link5" value="0 0 0" />
+  
+  <xacro:property name="box_lynxmotion_link5_size" value="0.1 .01 .09" />
+  
+  <xacro:property name="origin_lynxmotion_link6" value="0 0 0" />
+  
+  <xacro:property name="box_lynxmotion_link6_size" value="0.12 .12 .12" />
+  
+  <xacro:property name="lynxmotion_rotation_X_axes" value="1 0 0" />
+  
+  <xacro:property name="lynxmotion_rotation_Y_axes" value="0 1 0" />
+  
+  <xacro:property name="lynxmotion_rotation_Z_axes" value="0 0 1" />
+  <xacro:property name="lynxmotion_limit_lower" value="-1.57" />
+  <xacro:property name="lynxmotion_limit_upper" value="1.57" />
+  
+  <xacro:property name="cylinder_lynxmotion_shoulder1_radius" value=".02" />
+  
+  <xacro:property name="cylinder_lynxmotion_shoulder1_length" value="0.3" />
+  
+   <xacro:property name="cylinder_lynxmotion_shoulder_radius" value=".08" />
+  
+  <xacro:property name="cylinder_lynxmotion_shoulder_length" value="0.2" />
+
+</robot>

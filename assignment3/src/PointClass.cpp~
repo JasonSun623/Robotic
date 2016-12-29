@@ -1,0 +1,46 @@
+#include "PointClass.h"
+
+PointClass::PointClass(double xPos, double yPos)
+{
+	x = xPos;
+	y = yPos;
+}
+
+PointClass::~PointClass()
+{
+}
+
+double PointClass::getAngle(PointClass* target)
+{
+	double angle;
+	angle = atan2((target->y - y),(target->x - x));
+	return angle;
+}
+
+double PointClass::getDistance(PointClass* target)
+{
+	double distance;
+	distance = sqrt((pow(target->y - y,2.0)) + (pow(target->x - x,2.0)));
+	return distance;
+}
+
+PointClass PointClass::operator+(const PointClass &other) const
+{
+   PointClass result = *(new PointClass(x+other.x, y+other.y));
+   return result;
+} 
+
+PointClass PointClass::operator-(const PointClass &other) const
+{
+   PointClass result = *(new PointClass(x-other.x, y-other.y));
+   return result;
+} 
+
+PointClass PointClass::times(double r){
+	return *(new PointClass(r*x, r*y));
+}
+
+double PointClass::getAbs()
+{
+	return sqrt((pow(y,2.0)) + (pow(x,2.0)));
+}

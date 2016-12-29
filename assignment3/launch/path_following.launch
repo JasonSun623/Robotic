@@ -1,0 +1,31 @@
+<launch>
+        <node pkg="tf"
+	      type="static_transform_publisher" 
+	      name="localizer" 
+	      args="0 0 0 0 0 0 map odom 100" 
+	/>
+
+	<node
+		pkg="stage_ros"
+		type="stageros"
+		name="stageros"
+		args="$(find assignment3)/world/empty.world"
+		respawn="true"
+		
+	/>
+	<node
+		pkg="assignment3"
+		type="$(arg node)"
+		name="$(arg node)"
+		output="screen"
+		launch-prefix="xterm -e"
+	/>
+	<node
+		pkg="assignment3"
+		type="follow_carrot_node"
+		name="follow_carrot_node"
+		output="screen"
+		launch-prefix="xterm -e"
+	/>
+
+</launch>

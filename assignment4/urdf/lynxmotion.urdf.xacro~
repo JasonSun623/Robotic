@@ -1,0 +1,335 @@
+<?xml version="1.0"?>
+<robot name="test_robot" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="$(find assignment4)/urdf/lynxmotion_properties.xacro"/>
+  
+<!--LINKS -->
+
+<xacro:macro name="lynxmotion_link_caster" params="name *origin_container **geometry_container **material_container">
+<!-- Link-->
+  <link name="${name}">
+   	<visual>
+   	   
+   	   <xacro:insert_block name="geometry_container" />  	   
+   	   
+   	   <xacro:insert_block name="origin_container" />
+   	   
+   	   <xacro:insert_block name="material_container" /> 
+      </visual> 
+  </link>
+</xacro:macro>
+ 
+
+<xacro:lynxmotion_link_caster name="base_link">
+  <origin_container>
+     <origin xyz="${origin_lynxmotion_link}" />
+  </origin_container>
+  
+  <geometry_container>
+   <geometry>
+   	<cylinder length="${cylinder_lynxmotion_base_length}" radius="${cylinder_lynxmotion_base_radius}" />
+   </geometry>
+  </geometry_container>
+  
+  <material_container>
+     <material name="">
+     	<color rgba="${colour_lynxmotion_black}"/>
+     </material>
+  </material_container>
+</xacro:lynxmotion_link_caster>
+
+<xacro:lynxmotion_link_caster name="link1">
+  <origin_container>
+     <origin xyz="${origin_lynxmotion_link}" />
+  </origin_container>
+  
+  <geometry_container>
+   <geometry>
+   	<box size="${box_lynxmotion_link1_size}" />
+   </geometry>
+  </geometry_container>
+  
+  <material_container>
+     <material name="">
+     	<color rgba="${colour_lynxmotion_black}"/>
+     </material>
+  </material_container>
+</xacro:lynxmotion_link_caster>
+
+<xacro:lynxmotion_link_caster name="link2">
+  <origin_container>
+     <origin xyz="${origin_lynxmotion_link}" />
+  </origin_container>
+  
+  <geometry_container>
+   <geometry>
+   	<box size="${box_lynxmotion_link2_size}" />
+   </geometry>
+  </geometry_container>
+  
+  <material_container>
+     <material name="">
+     	<color rgba="${colour_lynxmotion_black}"/>
+     </material>
+  </material_container>
+</xacro:lynxmotion_link_caster>
+
+<xacro:lynxmotion_link_caster name="link3">
+  <origin_container>
+     <origin xyz="${origin_lynxmotion_link}" />
+  </origin_container>
+  
+  <geometry_container>
+   <geometry>
+   	<box size="${box_lynxmotion_link3_size}" />
+   </geometry>
+  </geometry_container>
+  
+  <material_container>
+     <material name="">
+     	<color rgba="${colour_lynxmotion_black}"/>
+     </material>
+  </material_container>
+</xacro:lynxmotion_link_caster>
+
+<xacro:lynxmotion_link_caster name="link8">
+  <origin_container>
+     <origin xyz="${origin_lynxmotion_link}" />
+  </origin_container>
+  
+  <geometry_container>
+   <geometry>
+   	<box size="${box_lynxmotion_link3_size}" />
+   </geometry>
+  </geometry_container>
+  
+  <material_container>
+     <material name="">
+     	<color rgba="${colour_lynxmotion_black}"/>
+     </material>
+  </material_container>
+</xacro:lynxmotion_link_caster>
+
+<xacro:lynxmotion_link_caster name="link9">
+  <origin_container>
+     <origin xyz="${origin_lynxmotion_link}" />
+  </origin_container>
+  
+  <geometry_container>
+   <geometry>
+   	<box size="${box_lynxmotion_link9_size}" />
+   </geometry>
+  </geometry_container>
+  
+  <material_container>
+     <material name="">
+     	<color rgba="${colour_lynxmotion_black}"/>
+     </material>
+  </material_container>
+</xacro:lynxmotion_link_caster>
+
+<xacro:lynxmotion_link_caster name="link10">
+  <origin_container>
+     <origin xyz="${origin_lynxmotion_link}" />
+  </origin_container>
+  
+  <geometry_container>
+   <geometry>
+   	<box size="${box_lynxmotion_link3_size}" />
+   </geometry>
+  </geometry_container>
+  
+  <material_container>
+     <material name="">
+     	<color rgba="${colour_lynxmotion_black}"/>
+     </material>
+  </material_container>
+</xacro:lynxmotion_link_caster>
+
+<xacro:lynxmotion_link_caster name="link11">
+  <origin_container>
+     <origin xyz="${origin_lynxmotion_link}" />
+  </origin_container>
+  
+  <geometry_container>
+   <geometry>
+   	<box size="${box_lynxmotion_link3_size}" />
+   </geometry>
+  </geometry_container>
+  
+  <material_container>
+     <material name="">
+     	<color rgba="${colour_lynxmotion_black}"/>
+     </material>
+  </material_container>
+</xacro:lynxmotion_link_caster>
+
+
+<xacro:lynxmotion_link_caster name="link4">
+  <origin_container>
+     <origin xyz="${origin_lynxmotion_link}" />
+  </origin_container>
+  
+  <geometry_container>
+   <geometry>
+   	<cylinder radius="${cylinder_lynxmotion_shoulder_radius}" length="${cylinder_lynxmotion_shoulder_length}" />
+   </geometry>
+  </geometry_container>
+  
+  <material_container>
+     <material name="">
+     	<color rgba="${colour_lynxmotion_black}"/>
+     </material>
+  </material_container>
+</xacro:lynxmotion_link_caster>
+
+<xacro:lynxmotion_link_caster name="link5">
+  <origin_container>
+     <origin xyz=" ${origin_lynxmotion_link}" />
+  </origin_container>
+  
+  <geometry_container>
+   <geometry>
+   	<cylinder radius="${cylinder_lynxmotion_shoulder1_radius}" length="${cylinder_lynxmotion_shoulder1_length}" />
+   </geometry>
+  </geometry_container>
+  
+  <material_container>
+     <material name="">
+     	<color rgba="${colour_lynxmotion_pebble_gray}"/>
+     </material>
+  </material_container>
+</xacro:lynxmotion_link_caster>
+
+
+<xacro:lynxmotion_link_caster name="link6">
+  <origin_container>
+     <origin xyz="${origin_lynxmotion_link}" />
+  </origin_container>
+  
+  <geometry_container>
+   <geometry>
+   	<box size="${box_lynxmotion_link6_size}" />
+   </geometry>
+  </geometry_container>
+  
+  <material_container>
+     <material name="">
+     	<color rgba="${colour_lynxmotion_black}"/>
+     </material>
+  </material_container>
+</xacro:lynxmotion_link_caster>
+
+
+
+<!-- HERE I AM STARTING FOR THE JOINT-->
+
+<xacro:macro name="lynxmotion_joint_caster" params="suffix childLink parentLink type **origin **limit">
+<!-- joint-->
+<joint name="joint${suffix}" type="${type}">
+    <xacro:insert_block name="limit" />
+    <xacro:insert_block name="origin" />
+    <parent link="${parentLink}"/>
+    <child link="${childLink}"/>
+</joint>
+</xacro:macro>
+
+<xacro:lynxmotion_joint_caster suffix="1" childLink="link1" parentLink="base_link" type="revolute">
+  <origin>
+  	<axis xyz="${lynxmotion_rotation_Z_axes}" />
+  	<origin xyz="0 0 0.02" />
+  </origin>
+  <limit>
+  	<limit upper="${lynxmotion_limit_upper}" lower="${lynxmotion_limit_lower}" velocity="10" effort="1"/>
+  </limit>
+</xacro:lynxmotion_joint_caster>
+
+<xacro:lynxmotion_joint_caster suffix="2" childLink="link2" parentLink="link1" type="fixed">
+  <origin>	
+  	<origin xyz="0 0 0.05" />
+  	<axis xyz="${lynxmotion_rotation_X_axes}" />
+  </origin>
+  <limit>
+  </limit>
+</xacro:lynxmotion_joint_caster>
+
+<xacro:lynxmotion_joint_caster suffix="3" childLink="link3" parentLink="link2" type="revolute">
+  <origin>	
+  	<origin xyz=".08 0 .08" />
+  	<axis xyz="${lynxmotion_rotation_X_axes}" />
+  </origin>
+  <limit>
+  	<limit upper="${lynxmotion_limit_upper}" lower="${lynxmotion_limit_lower}" velocity="10" effort="1"/>
+  </limit>
+</xacro:lynxmotion_joint_caster>
+
+<xacro:lynxmotion_joint_caster suffix="8" childLink="link8" parentLink="link3" type="fixed">
+  <origin>	
+  	<origin xyz="-.16 0 .0" />
+  	<axis xyz="${lynxmotion_rotation_X_axes}" />
+  </origin>
+  <limit>
+  </limit>
+</xacro:lynxmotion_joint_caster>
+
+<xacro:lynxmotion_joint_caster suffix="9" childLink="link9" parentLink="link8" type="fixed">
+  <origin>	
+  	<origin xyz=".08 0 .10" rpy="0 1.57075 0" />
+  	<axis xyz="${lynxmotion_rotation_Y_axes}" />
+  </origin>
+  <limit>
+  </limit>
+</xacro:lynxmotion_joint_caster>
+
+<xacro:lynxmotion_joint_caster suffix="10" childLink="link10" parentLink="link8" type="fixed">
+  <origin>	
+  	<origin xyz=".0 0 .20" />
+  	<axis xyz="${lynxmotion_rotation_X_axes}" />
+  </origin>
+  <limit>
+  </limit>
+</xacro:lynxmotion_joint_caster>
+
+<xacro:lynxmotion_joint_caster suffix="11" childLink="link11" parentLink="link8" type="fixed">
+  <origin>	
+  	<origin xyz=".16 0 .20" />
+  	<axis xyz="${lynxmotion_rotation_X_axes}" />
+  </origin>
+  <limit>
+  </limit>
+</xacro:lynxmotion_joint_caster>
+
+
+
+<xacro:lynxmotion_joint_caster suffix="4" childLink="link4" parentLink="link8" type="revolute">
+  <origin>
+        <axis xyz="${lynxmotion_rotation_X_axes}" />
+  	<origin xyz="0.08 0.025 0.300" rpy="1.57075 0 0"/> 
+  </origin>
+  <limit>
+  	<limit upper="${lynxmotion_limit_upper}" lower="${lynxmotion_limit_lower}" velocity="10" effort="1"/>
+  </limit>
+</xacro:lynxmotion_joint_caster>
+
+<xacro:lynxmotion_joint_caster suffix="5" childLink="link5" parentLink="link4" type="fixed">
+  <origin>
+  	<origin xyz="0 0 -0.2" rpy="0 0 0"/>
+  	<axis xyz="${lynxmotion_rotation_Y_axes}" />
+  </origin>
+  <limit>
+  </limit>
+</xacro:lynxmotion_joint_caster>
+
+
+<xacro:lynxmotion_joint_caster suffix="6" childLink="link6" parentLink="link5" type="revolute">
+  <origin>
+  	<origin xyz="0 0 -0.2"  rpy="1.57075 0 0" />
+  	<axis xyz="${lynxmotion_rotation_Y_axes}" />
+  </origin>
+  <limit>
+  	<limit upper="3.14" lower="-3.14" velocity="10" effort="1"/>
+  </limit>
+</xacro:lynxmotion_joint_caster>
+
+</robot>
+
+  
