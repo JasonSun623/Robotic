@@ -1,8 +1,0 @@
-prefix=/home/viki/ROS/Ass1/devel
-
-Name: assignment1
-Description: Description of assignment1
-Version: 0.0.0
-Cflags: -I/home/viki/ROS/Ass1/devel/include
-Libs: -L/home/viki/ROS/Ass1/devel/lib 
-Requires: 
