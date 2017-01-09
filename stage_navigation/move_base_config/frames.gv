@@ -1,0 +1,10 @@
+digraph G {
+"base_link" -> "base_laser_link"[label="Broadcaster: /stageros\nAverage rate: 20.202 Hz\nMost recent transform: 38.850 ( 0.000 sec old)\nBuffer length: 4.950 sec\n"];
+"base_footprint" -> "base_link"[label="Broadcaster: /stageros\nAverage rate: 20.202 Hz\nMost recent transform: 38.850 ( 0.000 sec old)\nBuffer length: 4.950 sec\n"];
+"odom" -> "base_footprint"[label="Broadcaster: /stageros\nAverage rate: 20.202 Hz\nMost recent transform: 38.850 ( 0.000 sec old)\nBuffer length: 4.950 sec\n"];
+"map" -> "odom"[label="Broadcaster: /slam_gmapping\nAverage rate: 20.202 Hz\nMost recent transform: 38.900 ( -0.050 sec old)\nBuffer length: 4.950 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 38.850"[ shape=plaintext ] ;
+ }->"map";
+}

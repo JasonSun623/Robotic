@@ -10,8 +10,6 @@
 #include <geometry_msgs/Point.h>
 
 #define BUFFER_SIZE 1000 
-
-#define TOLERANCE 0.001
 #define SPEED 0.5 
 #define LOOK_AHEAD 0.9
 #define PLAN_FRAME   "odom"
