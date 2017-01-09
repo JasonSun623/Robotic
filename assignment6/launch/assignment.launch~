@@ -1,6 +1,0 @@
-<launch>
-	<!-- launch laser_amcl -->
-	<include file="$(find stage_navigation)/launch/laser_amcl.launch" />
-	<!-- launch navigator node -->
-	<!-- node name="navigator" pkg="assignment6" type="assignment6"-->
-</launch>
